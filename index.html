@@ -275,6 +275,7 @@
   </div>
   <div class="lock-err" id="lock-err"></div>
   <div class="lock-hint" id="lock-hint"></div>
+  <button id="lock-reset-btn" onclick="lockReset()" style="display:none;margin-top:14px;background:none;border:none;color:#ff5252;font-size:.7rem;cursor:pointer;text-decoration:underline;">Réinitialiser le PIN</button>
 </div>
 
 
@@ -921,9 +922,10 @@ const PIN_KEY     = 'pm_pin_hash';
 const PIN_LEN     = 3;
 const SESSION_KEY = 'pm_session_unlocked';
 
-let lockInput   = '';
-let lockMode    = 'enter'; // 'setup' | 'confirm' | 'enter'
-let lockPending = '';      // PIN en attente lors du setup (étape confirm)
+let lockInput    = '';
+let lockMode     = 'enter'; // 'setup' | 'confirm' | 'enter'
+let lockPending  = '';      // PIN en attente lors du setup (étape confirm)
+let lockAttempts = 0;
 
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -991,12 +993,32 @@ async function lockSubmit() {
   const stored = localStorage.getItem(PIN_KEY);
   const hash   = await sha256(lockInput);
   if (hash === stored) {
+    lockAttempts = 0;
     sessionStorage.setItem(SESSION_KEY, '1');
     document.getElementById('lock-screen').classList.add('hidden');
     document.getElementById('lock-err').textContent = '';
   } else {
+    lockAttempts++;
+    if (lockAttempts >= 3) {
+      document.getElementById('lock-reset-btn').style.display = '';
+    }
     lockErrorShake('PIN incorrect — réessayez');
   }
+}
+
+function lockReset() {
+  if (!confirm('Réinitialiser le PIN ? Vous devrez en créer un nouveau.')) return;
+  localStorage.removeItem(PIN_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  lockAttempts = 0;
+  lockInput    = '';
+  lockMode     = 'setup';
+  lockPending  = '';
+  document.getElementById('lock-reset-btn').style.display = 'none';
+  document.getElementById('lock-title').textContent = 'Créez votre PIN';
+  document.getElementById('lock-hint').textContent  = `Choisissez un PIN à ${PIN_LEN} chiffres pour sécuriser l'accès`;
+  document.getElementById('lock-err').textContent   = '';
+  renderDots();
 }
 
 function lockKey(k) {
