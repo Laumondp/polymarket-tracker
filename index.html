@@ -5,6 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Polymarket Tracker</title>
   <style>
+    /* ── LOCK SCREEN ─────────────────────────────────────────────── */
+    #lock-screen{
+      position:fixed;inset:0;background:#0d0f1a;z-index:9999;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:0;
+    }
+    #lock-screen.hidden{display:none;}
+    .lock-logo{font-size:1.3rem;font-weight:900;background:linear-gradient(90deg,#00d4aa,#00b4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;}
+    .lock-sub{font-size:.72rem;color:#7b8bb2;margin-bottom:32px;}
+    .lock-title{font-size:.85rem;font-weight:700;color:#e8edf8;margin-bottom:20px;text-align:center;}
+    .lock-dots{display:flex;gap:10px;margin-bottom:28px;}
+    .lock-dot{
+      width:14px;height:14px;border-radius:50%;
+      border:2px solid #252d45;background:transparent;
+      transition:background .15s,border-color .15s;
+    }
+    .lock-dot.filled{background:#00d4aa;border-color:#00d4aa;}
+    .lock-dot.error{background:#ff5252;border-color:#ff5252;}
+    .lock-numpad{display:grid;grid-template-columns:repeat(3,70px);gap:10px;}
+    .lock-key{
+      height:60px;background:#141929;border:1px solid #252d45;border-radius:12px;
+      color:#e8edf8;font-size:1.25rem;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .1s,border-color .1s,transform .08s;
+      user-select:none;
+    }
+    .lock-key:hover{background:#1c2235;border-color:#4f8ef7;}
+    .lock-key:active{transform:scale(.93);}
+    .lock-key.del{font-size:.9rem;color:#7b8bb2;}
+    .lock-key.ok{background:rgba(0,212,170,.15);border-color:rgba(0,212,170,.4);color:#00d4aa;}
+    .lock-key.ok:hover{background:rgba(0,212,170,.3);}
+    .lock-err{font-size:.72rem;color:#ff5252;min-height:1.2em;margin-top:14px;text-align:center;}
+    .lock-hint{font-size:.65rem;color:#7b8bb2;margin-top:18px;text-align:center;max-width:230px;line-height:1.5;}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .shake{animation:shake .3s ease;}
+  </style>
+  <style>
     :root {
       --bg:       #0d0f1a;
       --surface:  #141929;
@@ -215,6 +252,31 @@
   </style>
 </head>
 <body>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+  <div class="lock-logo">📊 Polymarket Tracker</div>
+  <div class="lock-sub">Marchés de prédiction · Accès sécurisé</div>
+  <div class="lock-title" id="lock-title">Entrez votre PIN</div>
+  <div class="lock-dots" id="lock-dots"></div>
+  <div class="lock-numpad" id="lock-numpad">
+    <button class="lock-key" data-k="1">1</button>
+    <button class="lock-key" data-k="2">2</button>
+    <button class="lock-key" data-k="3">3</button>
+    <button class="lock-key" data-k="4">4</button>
+    <button class="lock-key" data-k="5">5</button>
+    <button class="lock-key" data-k="6">6</button>
+    <button class="lock-key" data-k="7">7</button>
+    <button class="lock-key" data-k="8">8</button>
+    <button class="lock-key" data-k="9">9</button>
+    <button class="lock-key del" data-k="del">⌫</button>
+    <button class="lock-key" data-k="0">0</button>
+    <button class="lock-key ok" data-k="ok">✓</button>
+  </div>
+  <div class="lock-err" id="lock-err"></div>
+  <div class="lock-hint" id="lock-hint"></div>
+</div>
+
 
 <!-- HEADER -->
 <header>
@@ -851,6 +913,134 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupAutoRefresh();
 });
+
+// ─────────────────────────────────────────────────────────────────────
+// LOCK SCREEN — PIN 10 chiffres (SHA-256)
+// ─────────────────────────────────────────────────────────────────────
+const PIN_KEY     = 'pm_pin_hash';
+const PIN_LEN     = 10;
+const SESSION_KEY = 'pm_session_unlocked';
+
+let lockInput   = '';
+let lockMode    = 'enter'; // 'setup' | 'confirm' | 'enter'
+let lockPending = '';      // PIN en attente lors du setup (étape confirm)
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function renderDots() {
+  const container = document.getElementById('lock-dots');
+  container.innerHTML = '';
+  for (let i = 0; i < PIN_LEN; i++) {
+    const d = document.createElement('div');
+    d.className = 'lock-dot' + (i < lockInput.length ? ' filled' : '');
+    container.appendChild(d);
+  }
+}
+
+function lockErrorShake(msg) {
+  document.getElementById('lock-err').textContent = msg;
+  const dots = document.getElementById('lock-dots');
+  dots.querySelectorAll('.lock-dot').forEach(d => { d.classList.remove('filled'); d.classList.add('error'); });
+  dots.classList.add('shake');
+  setTimeout(() => {
+    dots.classList.remove('shake');
+    dots.querySelectorAll('.lock-dot').forEach(d => d.classList.remove('error'));
+    lockInput = '';
+    renderDots();
+  }, 500);
+}
+
+async function lockSubmit() {
+  if (lockInput.length < PIN_LEN) {
+    lockErrorShake(`PIN incomplet — ${PIN_LEN} chiffres requis`);
+    return;
+  }
+
+  if (lockMode === 'setup') {
+    lockPending = lockInput;
+    lockInput   = '';
+    lockMode    = 'confirm';
+    document.getElementById('lock-title').textContent = 'Confirmez votre PIN';
+    document.getElementById('lock-err').textContent   = '';
+    document.getElementById('lock-hint').textContent  = 'Saisissez à nouveau le PIN pour confirmer';
+    renderDots();
+    return;
+  }
+
+  if (lockMode === 'confirm') {
+    if (lockInput !== lockPending) {
+      lockPending = '';
+      lockMode    = 'setup';
+      document.getElementById('lock-title').textContent = 'Créez votre PIN';
+      document.getElementById('lock-hint').textContent  = `Choisissez un PIN à ${PIN_LEN} chiffres`;
+      lockErrorShake('Les PIN ne correspondent pas — recommencez');
+      return;
+    }
+    const hash = await sha256(lockInput);
+    localStorage.setItem(PIN_KEY, hash);
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('lock-screen').classList.add('hidden');
+    document.getElementById('lock-err').textContent = '';
+    return;
+  }
+
+  // mode 'enter'
+  const stored = localStorage.getItem(PIN_KEY);
+  const hash   = await sha256(lockInput);
+  if (hash === stored) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('lock-screen').classList.add('hidden');
+    document.getElementById('lock-err').textContent = '';
+  } else {
+    lockErrorShake('PIN incorrect — réessayez');
+  }
+}
+
+function lockKey(k) {
+  document.getElementById('lock-err').textContent = '';
+  if (k === 'del') {
+    lockInput = lockInput.slice(0, -1);
+  } else if (k === 'ok') {
+    lockSubmit();
+    return;
+  } else if (lockInput.length < PIN_LEN) {
+    lockInput += k;
+    if (lockInput.length === PIN_LEN) lockSubmit(); // auto-submit quand complet
+  }
+  renderDots();
+}
+
+(function initLock() {
+  // Session déjà déverrouillée dans cet onglet
+  if (sessionStorage.getItem(SESSION_KEY)) {
+    document.getElementById('lock-screen').classList.add('hidden');
+    return;
+  }
+
+  const hasPIN = !!localStorage.getItem(PIN_KEY);
+  lockMode = hasPIN ? 'enter' : 'setup';
+  document.getElementById('lock-title').textContent = hasPIN ? 'Entrez votre PIN' : 'Créez votre PIN';
+  document.getElementById('lock-hint').textContent  = hasPIN
+    ? ''
+    : `Choisissez un PIN à ${PIN_LEN} chiffres pour sécuriser l'accès`;
+
+  renderDots();
+
+  document.getElementById('lock-numpad').addEventListener('click', e => {
+    const k = e.target.closest('.lock-key')?.dataset.k;
+    if (k !== undefined) lockKey(k);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('lock-screen').classList.contains('hidden')) return;
+    if (e.key >= '0' && e.key <= '9') lockKey(e.key);
+    else if (e.key === 'Backspace') lockKey('del');
+    else if (e.key === 'Enter') lockKey('ok');
+  });
+})();
 </script>
 </body>
 </html>
