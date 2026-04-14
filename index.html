@@ -654,10 +654,14 @@ function renderTrades(trades) {
     const val   = parseFloat(t.usdcSize) || (parseFloat(t.size) * parseFloat(t.price)) || 0;
     const ts    = typeof t.timestamp === 'number' ? t.timestamp * 1000 : new Date(t.timestamp).getTime();
     const isToday = ts >= todayStart.getTime();
+    const price = parseFloat(t.price) || 0;
+    const outcomeLabel = t.outcome
+      ? (price > 0 ? `${t.outcome} · ${(price*100).toFixed(0)}¢` : t.outcome)
+      : '';
     return `<div class="trade-row${isToday ? ' today' : ''}">
       <span class="trade-side ${sideClass}">${side}</span>
       <span class="trade-title" title="${t.title||''}">${t.title||'—'}</span>
-      <span class="trade-outcome">${t.outcome||''}</span>
+      <span class="trade-outcome">${outcomeLabel}</span>
       <div class="trade-info">
         <div>${fmt$(val)}</div>
         <div class="trade-date">${date}</div>
