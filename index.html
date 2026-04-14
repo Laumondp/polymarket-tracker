@@ -323,9 +323,7 @@
 </header>
 
 <!-- WALLET BAR -->
-<div class="wallet-bar" id="wallet-bar">
-  <button class="add-wallet-btn" id="btn-add-wallet">＋ Ajouter un Joueur</button>
-</div>
+<div class="wallet-bar" id="wallet-bar"></div>
 
 <!-- ADD PLAYER ZONE -->
 <div class="add-player-zone">
@@ -340,9 +338,8 @@
 <main id="main-content">
   <div class="no-wallet" id="no-wallet-msg">
     <div class="no-wallet-icon">🔍</div>
-    <h2>Aucun wallet suivi</h2>
-    <p>Ajoutez une adresse Polymarket pour commencer à suivre les positions et les trades.</p>
-    <button class="btn btn-primary" onclick="openAddWallet()">＋ Ajouter un Joueur</button>
+    <h2>Aucun joueur suivi</h2>
+    <p>Ajoutez une adresse Polymarket via la zone ci-dessus pour commencer le suivi.</p>
   </div>
 
   <div id="wallet-dashboard" style="display:none">
@@ -376,25 +373,6 @@
   </div>
 </main>
 
-<!-- MODAL ADD WALLET -->
-<div class="overlay" id="modal-wallet">
-  <div class="modal">
-    <h2>Ajouter un wallet</h2>
-    <div class="fg">
-      <label>Adresse Ethereum (0x...)</label>
-      <input type="text" id="input-address" placeholder="0x492442eab586f242b53bda933fd5de859c8a3782" maxlength="42" autocomplete="off" spellcheck="false">
-    </div>
-    <div class="fg">
-      <label>Surnom (optionnel)</label>
-      <input type="text" id="input-nick" placeholder="ex: Mon wallet, Alice..." maxlength="20">
-    </div>
-    <div class="modal-err" id="modal-err"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="submitAddWallet()">Ajouter</button>
-    </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -531,11 +509,6 @@ function renderWalletBar() {
     bar.appendChild(tab);
   });
 
-  const addBtn = document.createElement('button');
-  addBtn.className = 'add-wallet-btn';
-  addBtn.textContent = '＋ Ajouter un Joueur';
-  addBtn.addEventListener('click', openAddWallet);
-  bar.appendChild(addBtn);
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -847,38 +820,6 @@ function removeWallet(address) {
   toast('Wallet retiré');
 }
 
-function openAddWallet() {
-  document.getElementById('input-address').value = '';
-  document.getElementById('input-nick').value = '';
-  document.getElementById('modal-err').textContent = '';
-  document.getElementById('modal-wallet').classList.add('open');
-  setTimeout(() => document.getElementById('input-address').focus(), 50);
-}
-
-function closeModal() {
-  document.getElementById('modal-wallet').classList.remove('open');
-}
-
-function submitAddWallet() {
-  const addr = document.getElementById('input-address').value.trim().toLowerCase();
-  const nick = document.getElementById('input-nick').value.trim();
-  const err  = document.getElementById('modal-err');
-
-  if (!/^0x[0-9a-f]{40}$/.test(addr)) {
-    err.textContent = 'Adresse invalide — format 0x suivi de 40 caractères hex';
-    return;
-  }
-  if (wallets.find(w => w.address === addr)) {
-    err.textContent = 'Ce wallet est déjà suivi';
-    return;
-  }
-
-  wallets.push({ address: addr, nick });
-  saveWallets();
-  closeModal();
-  selectWallet(addr);
-  toast('Wallet ajouté !');
-}
 
 // ─────────────────────────────────────────────────────────────────────
 // INLINE ADD PLAYER
@@ -944,16 +885,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-refresh').addEventListener('click', () => loadAll(true));
   document.getElementById('refresh-select').addEventListener('change', setupAutoRefresh);
 
-  // Modal
-  document.getElementById('modal-wallet').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal-wallet')) closeModal();
-  });
-  document.getElementById('input-address').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('input-nick').focus();
-  });
-  document.getElementById('input-nick').addEventListener('keydown', e => {
-    if (e.key === 'Enter') submitAddWallet();
-  });
 
   // Initial render
   renderWalletBar();
