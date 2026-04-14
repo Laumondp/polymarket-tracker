@@ -186,10 +186,15 @@
     .side-sell{background:rgba(255,82,82,.15);color:var(--loss);}
     .side-redeem{background:rgba(255,215,0,.15);color:var(--gold);}
     .trade-title{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+    @keyframes outcome-blink {
+      0%,100%{ background:rgba(79,142,247,.15); color:var(--blue); }
+      50%    { background:rgba(79,142,247,.6);  color:#fff; }
+    }
     .trade-outcome{
       font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:3px;
       background:rgba(79,142,247,.15);color:var(--blue);
       flex-shrink:0;white-space:nowrap;
+      animation: outcome-blink 1.1s ease-in-out infinite;
     }
     .trade-info{text-align:right;flex-shrink:0;color:var(--muted);}
     .trade-date{font-size:.6rem;color:var(--muted);}
