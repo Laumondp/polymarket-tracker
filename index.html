@@ -172,6 +172,7 @@
     .trade-side{font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0;}
     .side-buy{background:rgba(0,230,118,.15);color:var(--profit);}
     .side-sell{background:rgba(255,82,82,.15);color:var(--loss);}
+    .side-redeem{background:rgba(255,215,0,.15);color:var(--gold);}
     .trade-title{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
     .trade-outcome{color:var(--muted);flex-shrink:0;}
     .trade-info{text-align:right;flex-shrink:0;color:var(--muted);}
@@ -407,7 +408,7 @@ async function apiFetch(url) {
 async function fetchWalletData(address) {
   const [positions, trades, valueArr] = await Promise.all([
     apiFetch(`${API_DATA}/positions?user=${address}&limit=100`),
-    apiFetch(`${API_DATA}/trades?user=${address}&limit=50`),
+    apiFetch(`${API_DATA}/activity?user=${address}&limit=50`),
     apiFetch(`${API_DATA}/value?user=${address}`),
   ]);
   const value = (valueArr && valueArr[0] && valueArr[0].value) || 0;
@@ -628,15 +629,17 @@ function renderTrades(trades) {
     return;
   }
 
-  info.textContent = `${trades.length} derniers trades`;
+  info.textContent = `${trades.length} dernières activités`;
 
   panel.innerHTML = trades.map(t => {
-    const date = fmtDate(t.timestamp);
-    const side = t.side === 'BUY' ? 'BUY' : 'SELL';
+    const date  = fmtDate(t.timestamp);
+    const isRedeem = t.type === 'REDEEM';
+    const side  = isRedeem ? 'REDEEM' : (t.side === 'BUY' ? 'BUY' : 'SELL');
+    const sideClass = isRedeem ? 'side-redeem' : `side-${side.toLowerCase()}`;
     const txUrl = t.transactionHash ? `https://polygonscan.com/tx/${t.transactionHash}` : null;
-    const val = parseFloat(t.size) * parseFloat(t.price);
+    const val   = parseFloat(t.usdcSize) || (parseFloat(t.size) * parseFloat(t.price)) || 0;
     return `<div class="trade-row">
-      <span class="trade-side side-${side.toLowerCase()}">${side}</span>
+      <span class="trade-side ${sideClass}">${side}</span>
       <span class="trade-title" title="${t.title||''}">${t.title||'—'}</span>
       <span class="trade-outcome">${t.outcome||''}</span>
       <div class="trade-info">
