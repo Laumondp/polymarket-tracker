@@ -324,7 +324,7 @@
 
 <!-- WALLET BAR -->
 <div class="wallet-bar" id="wallet-bar">
-  <button class="add-wallet-btn" id="btn-add-wallet">＋ Ajouter un wallet</button>
+  <button class="add-wallet-btn" id="btn-add-wallet">＋ Ajouter un Joueur</button>
 </div>
 
 <!-- ADD PLAYER ZONE -->
@@ -342,7 +342,7 @@
     <div class="no-wallet-icon">🔍</div>
     <h2>Aucun wallet suivi</h2>
     <p>Ajoutez une adresse Polymarket pour commencer à suivre les positions et les trades.</p>
-    <button class="btn btn-primary" onclick="openAddWallet()">＋ Ajouter un wallet</button>
+    <button class="btn btn-primary" onclick="openAddWallet()">＋ Ajouter un Joueur</button>
   </div>
 
   <div id="wallet-dashboard" style="display:none">
@@ -533,7 +533,7 @@ function renderWalletBar() {
 
   const addBtn = document.createElement('button');
   addBtn.className = 'add-wallet-btn';
-  addBtn.textContent = '＋ Ajouter un wallet';
+  addBtn.textContent = '＋ Ajouter un Joueur';
   addBtn.addEventListener('click', openAddWallet);
   bar.appendChild(addBtn);
 }
