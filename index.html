@@ -747,6 +747,29 @@ function showLoadingState() {
 // ─────────────────────────────────────────────────────────────────────
 // LOAD & REFRESH
 // ─────────────────────────────────────────────────────────────────────
+let isLoadingWallet = false;
+
+// Rafraîchit uniquement activité + positions (appelé toutes les 3s)
+async function loadWalletOnly() {
+  if (isLoadingWallet || !selected) return;
+  isLoadingWallet = true;
+  try {
+    const data = await fetchWalletData(selected);
+    walletData[selected] = data;
+    renderStats(data);
+    renderPositions(data.positions);
+    renderTrades(data.trades);
+    const now = new Date();
+    document.getElementById('last-update').textContent =
+      `Mis à jour ${now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
+  } catch(e) {
+    console.error(e);
+  } finally {
+    isLoadingWallet = false;
+  }
+}
+
+// Chargement complet (trending inclus) — appelé manuellement ou au changement de wallet
 async function loadAll(forceRefreshTrending = false) {
   if (isLoading) return;
   isLoading = true;
@@ -790,7 +813,7 @@ function setupAutoRefresh() {
   if (refreshTimer) clearInterval(refreshTimer);
   const secs = parseInt(document.getElementById('refresh-select').value) || 0;
   if (secs > 0) {
-    refreshTimer = setInterval(() => loadAll(), secs * 1000);
+    refreshTimer = setInterval(() => loadWalletOnly(), secs * 1000);
   }
 }
 
