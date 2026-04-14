@@ -193,6 +193,25 @@
     .no-wallet-icon{font-size:3rem;margin-bottom:14px;}
     .no-wallet h2{font-size:1.1rem;font-weight:700;margin-bottom:8px;}
     .no-wallet p{font-size:.8rem;color:var(--muted);margin-bottom:20px;}
+
+    /* ── ADD PLAYER ZONE ─────────────────────────────────────── */
+    .add-player-zone{
+      background:var(--surface);border-bottom:1px solid var(--border);
+      padding:8px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    }
+    .apz-label{font-size:.72rem;color:var(--muted);white-space:nowrap;font-weight:600;}
+    .add-player-zone input{
+      padding:5px 10px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:8px;color:var(--text);font-size:.76rem;outline:none;transition:border-color .15s;
+    }
+    .add-player-zone input:focus{border-color:var(--accent);}
+    .apz-addr{width:280px;font-family:monospace;}
+    .apz-nick{width:130px;}
+    .apz-err{font-size:.68rem;color:var(--loss);min-height:1em;}
+    @media(max-width:640px){
+      .add-player-zone{flex-direction:column;align-items:flex-start;}
+      .apz-addr,.apz-nick{width:100%;}
+    }
   </style>
 </head>
 <body>
@@ -223,6 +242,15 @@
 <!-- WALLET BAR -->
 <div class="wallet-bar" id="wallet-bar">
   <button class="add-wallet-btn" id="btn-add-wallet">＋ Ajouter un wallet</button>
+</div>
+
+<!-- ADD PLAYER ZONE -->
+<div class="add-player-zone">
+  <span class="apz-label">➕ Ajouter un parieur :</span>
+  <input type="text" id="apz-address" class="apz-addr" placeholder="0x… adresse Ethereum" maxlength="42" autocomplete="off" spellcheck="false">
+  <input type="text" id="apz-nick" class="apz-nick" placeholder="Surnom (optionnel)" maxlength="20">
+  <button class="btn btn-primary" style="padding:5px 14px;font-size:.76rem;" onclick="submitInlineAdd()">Ajouter</button>
+  <span class="apz-err" id="apz-err"></span>
 </div>
 
 <!-- MAIN -->
@@ -737,6 +765,33 @@ function submitAddWallet() {
 }
 
 // ─────────────────────────────────────────────────────────────────────
+// INLINE ADD PLAYER
+// ─────────────────────────────────────────────────────────────────────
+function submitInlineAdd() {
+  const addr = document.getElementById('apz-address').value.trim().toLowerCase();
+  const nick = document.getElementById('apz-nick').value.trim();
+  const err  = document.getElementById('apz-err');
+  err.textContent = '';
+
+  if (!/^0x[0-9a-f]{40}$/.test(addr)) {
+    err.textContent = 'Adresse invalide — 0x + 40 caractères hex';
+    return;
+  }
+  if (wallets.find(w => w.address === addr)) {
+    err.textContent = 'Ce wallet est déjà suivi';
+    return;
+  }
+
+  wallets.push({ address: addr, nick });
+  saveWallets();
+  document.getElementById('apz-address').value = '';
+  document.getElementById('apz-nick').value = '';
+  renderWalletBar();
+  selectWallet(addr);
+  toast('Parieur ajouté — chargement en cours…');
+}
+
+// ─────────────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -746,6 +801,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load wallets
   loadWallets();
+
+  // Ensure default wallets are always present
+  const defaultWallets = [
+    { address: '0x492442eab586f242b53bda933fd5de859c8a3782', nick: 'Exemple' },
+    { address: '0x7e3a1f95c558f39a51ff334d789e3e039b553246', nick: 'Parieur suivi' },
+  ];
+  let changed = false;
+  defaultWallets.forEach(dw => {
+    if (!wallets.find(w => w.address === dw.address)) {
+      wallets.push(dw);
+      changed = true;
+    }
+  });
+  if (changed) saveWallets();
+
+  // Keyboard shortcut on inline add inputs
+  document.getElementById('apz-address').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('apz-nick').focus();
+  });
+  document.getElementById('apz-nick').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitInlineAdd();
+  });
 
   // Refresh controls
   document.getElementById('btn-refresh').addEventListener('click', () => loadAll(true));
@@ -766,15 +843,6 @@ document.addEventListener('DOMContentLoaded', () => {
   renderWalletBar();
 
   if (wallets.length) {
-    selected = wallets[0].address;
-    document.getElementById('no-wallet-msg').style.display   = 'none';
-    document.getElementById('wallet-dashboard').style.display = '';
-    loadAll(true);
-  } else {
-    // Add example wallet
-    wallets.push({ address: '0x492442eab586f242b53bda933fd5de859c8a3782', nick: 'Exemple' });
-    saveWallets();
-    renderWalletBar();
     selected = wallets[0].address;
     document.getElementById('no-wallet-msg').style.display   = 'none';
     document.getElementById('wallet-dashboard').style.display = '';
