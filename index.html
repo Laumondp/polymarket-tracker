@@ -170,12 +170,17 @@
     .badge-redeem{font-size:.6rem;background:rgba(255,215,0,.15);color:var(--gold);border:1px solid rgba(255,215,0,.3);border-radius:4px;padding:1px 5px;}
 
     /* ── TRADES ─────────────────────────────────────────────── */
+    @keyframes trade-today {
+      0%,100%{ opacity:1; }
+      50%    { opacity:.35; }
+    }
     .trades-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;overflow:hidden;}
     .trade-row{
       display:flex;align-items:center;gap:8px;padding:7px 0;
       border-bottom:1px solid var(--border);font-size:.72rem;
     }
     .trade-row:last-child{border-bottom:none;}
+    .trade-row.today{ animation: trade-today 1.2s ease-in-out infinite; }
     .trade-side{font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0;}
     .side-buy{background:rgba(0,230,118,.15);color:var(--profit);}
     .side-sell{background:rgba(255,82,82,.15);color:var(--loss);}
@@ -638,6 +643,8 @@ function renderTrades(trades) {
 
   info.textContent = `${trades.length} dernières activités`;
 
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+
   panel.innerHTML = trades.map(t => {
     const date  = fmtDate(t.timestamp);
     const isRedeem = t.type === 'REDEEM';
@@ -645,7 +652,9 @@ function renderTrades(trades) {
     const sideClass = isRedeem ? 'side-redeem' : `side-${side.toLowerCase()}`;
     const txUrl = t.transactionHash ? `https://polygonscan.com/tx/${t.transactionHash}` : null;
     const val   = parseFloat(t.usdcSize) || (parseFloat(t.size) * parseFloat(t.price)) || 0;
-    return `<div class="trade-row">
+    const ts    = typeof t.timestamp === 'number' ? t.timestamp * 1000 : new Date(t.timestamp).getTime();
+    const isToday = ts >= todayStart.getTime();
+    return `<div class="trade-row${isToday ? ' today' : ''}">
       <span class="trade-side ${sideClass}">${side}</span>
       <span class="trade-title" title="${t.title||''}">${t.title||'—'}</span>
       <span class="trade-outcome">${t.outcome||''}</span>
