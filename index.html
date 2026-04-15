@@ -629,7 +629,7 @@ function renderTrades(trades) {
 
   const todayStart = new Date(); todayStart.setHours(0,0,0,0);
   // Suivi par jour : clé = "YYYY-MM-DD|titre"
-  const seenDayTitles = new Set();
+  let lastBetTagged = false;
 
   panel.innerHTML = trades.map(t => {
     const date  = fmtDate(t.timestamp);
@@ -645,11 +645,8 @@ function renderTrades(trades) {
       ? (price > 0 ? `${t.outcome} · ${(100/( price*100)).toFixed(4)}` : t.outcome)
       : '';
     const titleKey = (t.title || '').trim();
-    const d = new Date(ts);
-    const localDay = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const dayKey = localDay + '|' + titleKey;
-    const isLastBet = isToday && titleKey && !seenDayTitles.has(dayKey);
-    if (titleKey) seenDayTitles.add(dayKey);
+    const isLastBet = isToday && !lastBetTagged;
+    if (isLastBet) lastBetTagged = true;
     return `<div class="trade-row${isToday ? ' today' : ''}">
       <span class="trade-side ${sideClass}">${side}</span>
       <span class="trade-title" title="${t.title||''}">${t.title||'—'}</span>
