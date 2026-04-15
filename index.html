@@ -199,7 +199,8 @@
     .trade-info{text-align:right;flex-shrink:0;color:var(--muted);}
     .trade-date{font-size:.6rem;color:var(--muted);}
     .trade-tx{font-size:.6rem;color:var(--accent);cursor:pointer;}
-    .trade-ratio{font-size:.58rem;color:var(--muted);opacity:.7;}
+    .trade-ratio{font-size:.72rem;color:var(--text);font-weight:600;}
+    .trade-ratio-label{font-size:.58rem;color:var(--muted);font-weight:400;}
     .last-bet-tag{display:inline-flex;align-items:center;gap:3px;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(255,215,0,.15);color:#ffd700;border:1px solid rgba(255,215,0,.35);flex-shrink:0;white-space:nowrap;}
     .last-bet-tag::before{content:'▲';font-size:.55rem;margin-right:2px;}
 
@@ -653,8 +654,7 @@ function renderTrades(trades) {
       ${isLastBet ? '<span class="last-bet-tag">Dernier Paris</span>' : ''}
       ${outcomeLabel ? `<span class="trade-outcome">${outcomeLabel}</span>` : ''}
       <div class="trade-info">
-        <div>${fmt$(val)}</div>
-        ${val > 0 ? `<div class="trade-ratio">= 100÷${val.toFixed(2)} = ${(100/val).toFixed(2)}</div>` : ''}
+        ${val > 0 ? `<div class="trade-ratio"><span class="trade-ratio-label">100/${val.toFixed(2)} =</span> <strong>${(100/val).toFixed(4)}</strong></div>` : '<div>—</div>'}
         <div class="trade-date">${date}</div>
         ${txUrl ? `<a href="${txUrl}" target="_blank" class="trade-tx">Tx ↗</a>` : ''}
       </div>
