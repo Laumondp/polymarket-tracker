@@ -196,6 +196,7 @@
       flex-shrink:0;white-space:nowrap;
       animation: outcome-blink 1.1s ease-in-out infinite;
     }
+    .trade-outcome.no-blink{animation:none;opacity:.6;}
     .trade-info{text-align:right;flex-shrink:0;color:var(--muted);}
     .trade-date{font-size:.6rem;color:var(--muted);}
     .trade-tx{font-size:.6rem;color:var(--accent);cursor:pointer;}
@@ -648,7 +649,7 @@ function renderTrades(trades) {
       <span class="trade-side ${sideClass}">${side}</span>
       <span class="trade-title" title="${t.title||''}">${t.title||'—'}</span>
       ${isLastBet ? '<span class="last-bet-tag">Dernier Paris</span>' : ''}
-      ${outcomeLabel ? `<span class="trade-outcome">${outcomeLabel}</span>` : ''}
+      ${outcomeLabel ? `<span class="trade-outcome${isToday ? '' : ' no-blink'}">${outcomeLabel}</span>` : ''}
       <div class="trade-info">
         <div class="trade-date">${date}</div>
         ${txUrl ? `<a href="${txUrl}" target="_blank" class="trade-tx">Tx ↗</a>` : ''}
