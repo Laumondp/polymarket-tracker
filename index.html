@@ -645,7 +645,9 @@ function renderTrades(trades) {
       ? (price > 0 ? `${t.outcome} · ${(100/( price*100)).toFixed(4)}` : t.outcome)
       : '';
     const titleKey = (t.title || '').trim();
-    const dayKey = new Date(ts).toISOString().slice(0,10) + '|' + titleKey;
+    const d = new Date(ts);
+    const localDay = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const dayKey = localDay + '|' + titleKey;
     const isLastBet = titleKey && !seenDayTitles.has(dayKey);
     if (titleKey) seenDayTitles.add(dayKey);
     return `<div class="trade-row${isToday ? ' today' : ''}">
