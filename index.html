@@ -633,7 +633,7 @@ function renderTrades(trades) {
   panel.innerHTML = trades.map(t => {
     const date  = fmtDate(t.timestamp);
     const isRedeem = t.type === 'REDEEM';
-    const side  = isRedeem ? 'RACHETER' : (t.side === 'BUY' ? 'BUY' : 'SELL');
+    const side  = isRedeem ? 'RACHETER' : (t.side === 'BUY' ? 'ACHETER' : 'VENDRE');
     const sideClass = isRedeem ? 'side-redeem' : `side-${side.toLowerCase()}`;
     const txUrl = t.transactionHash ? `https://polygonscan.com/tx/${t.transactionHash}` : null;
     const val   = parseFloat(t.usdcSize) || (parseFloat(t.size) * parseFloat(t.price)) || 0;
