@@ -642,7 +642,7 @@ function renderTrades(trades) {
     const isToday = ts >= todayStart.getTime();
     const price = parseFloat(t.price) || 0;
     const outcomeLabel = t.outcome
-      ? (price > 0 ? `${t.outcome} · ${(price*100).toFixed(0)}¢` : t.outcome)
+      ? (price > 0 ? `${t.outcome} · ${(100/( price*100)).toFixed(4)}` : t.outcome)
       : '';
     const titleKey = (t.title || '').trim();
     const dayKey = new Date(ts).toISOString().slice(0,10) + '|' + titleKey;
@@ -654,7 +654,6 @@ function renderTrades(trades) {
       ${isLastBet ? '<span class="last-bet-tag">Dernier Paris</span>' : ''}
       ${outcomeLabel ? `<span class="trade-outcome">${outcomeLabel}</span>` : ''}
       <div class="trade-info">
-        ${val > 0 ? `<div class="trade-ratio"><span class="trade-ratio-label">100/${val.toFixed(2)} =</span> <strong>${(100/val).toFixed(4)}</strong></div>` : '<div>—</div>'}
         <div class="trade-date">${date}</div>
         ${txUrl ? `<a href="${txUrl}" target="_blank" class="trade-tx">Tx ↗</a>` : ''}
       </div>
