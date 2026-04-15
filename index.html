@@ -200,6 +200,8 @@
     .trade-date{font-size:.6rem;color:var(--muted);}
     .trade-tx{font-size:.6rem;color:var(--accent);cursor:pointer;}
     .trade-ratio{font-size:.58rem;color:var(--muted);opacity:.7;}
+    .last-bet-tag{display:inline-flex;align-items:center;gap:3px;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(255,215,0,.15);color:#ffd700;border:1px solid rgba(255,215,0,.35);flex-shrink:0;white-space:nowrap;}
+    .last-bet-tag::before{content:'▲';font-size:.55rem;margin-right:2px;}
 
     /* ── TRENDING ────────────────────────────────────────────── */
     .trending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:20px;}
@@ -625,6 +627,7 @@ function renderTrades(trades) {
   info.textContent = `${trades.length} dernières activités`;
 
   const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const seenTitles = new Set();
 
   panel.innerHTML = trades.map(t => {
     const date  = fmtDate(t.timestamp);
@@ -639,9 +642,13 @@ function renderTrades(trades) {
     const outcomeLabel = t.outcome
       ? (price > 0 ? `${t.outcome} · ${(price*100).toFixed(0)}¢` : t.outcome)
       : '';
+    const titleKey = (t.title || '').trim();
+    const isLastBet = titleKey && !seenTitles.has(titleKey);
+    if (titleKey) seenTitles.add(titleKey);
     return `<div class="trade-row${isToday ? ' today' : ''}">
       <span class="trade-side ${sideClass}">${side}</span>
       <span class="trade-title" title="${t.title||''}">${t.title||'—'}</span>
+      ${isLastBet ? '<span class="last-bet-tag">Dernier Paris</span>' : ''}
       ${outcomeLabel ? `<span class="trade-outcome">${outcomeLabel}</span>` : ''}
       <div class="trade-info">
         <div>${fmt$(val)}</div>
