@@ -648,7 +648,7 @@ function renderTrades(trades) {
     const d = new Date(ts);
     const localDay = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const dayKey = localDay + '|' + titleKey;
-    const isLastBet = titleKey && !seenDayTitles.has(dayKey);
+    const isLastBet = isToday && titleKey && !seenDayTitles.has(dayKey);
     if (titleKey) seenDayTitles.add(dayKey);
     return `<div class="trade-row${isToday ? ' today' : ''}">
       <span class="trade-side ${sideClass}">${side}</span>
