@@ -199,6 +199,7 @@
     .trade-info{text-align:right;flex-shrink:0;color:var(--muted);}
     .trade-date{font-size:.6rem;color:var(--muted);}
     .trade-tx{font-size:.6rem;color:var(--accent);cursor:pointer;}
+    .trade-ratio{font-size:.58rem;color:var(--muted);opacity:.7;}
 
     /* ── TRENDING ────────────────────────────────────────────── */
     .trending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:20px;}
@@ -641,9 +642,10 @@ function renderTrades(trades) {
     return `<div class="trade-row${isToday ? ' today' : ''}">
       <span class="trade-side ${sideClass}">${side}</span>
       <span class="trade-title" title="${t.title||''}">${t.title||'—'}</span>
-      <span class="trade-outcome">${outcomeLabel}</span>
+      ${outcomeLabel ? `<span class="trade-outcome">${outcomeLabel}</span>` : ''}
       <div class="trade-info">
         <div>${fmt$(val)}</div>
+        ${val > 0 ? `<div class="trade-ratio">= 100÷${val.toFixed(2)} = ${(100/val).toFixed(2)}</div>` : ''}
         <div class="trade-date">${date}</div>
         ${txUrl ? `<a href="${txUrl}" target="_blank" class="trade-tx">Tx ↗</a>` : ''}
       </div>
