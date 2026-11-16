@@ -400,11 +400,18 @@ let isLoading = false;
 // ─────────────────────────────────────────────────────────────────────
 const API_DATA  = 'https://data-api.polymarket.com';
 const API_GAMMA = 'https://gamma-api.polymarket.com';
+const CORS_PROXY = 'https://corsproxy.io/?';
 
 async function apiFetch(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  } catch(e) {
+    const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
 }
 
 async function fetchWalletData(address) {
@@ -832,7 +839,8 @@ function removeWallet(address) {
 // INLINE ADD PLAYER
 // ─────────────────────────────────────────────────────────────────────
 function submitInlineAdd() {
-  const addr = document.getElementById('apz-address').value.trim().toLowerCase();
+  const raw  = document.getElementById('apz-address').value.trim();
+  const addr = raw.toLowerCase();
   const nick = document.getElementById('apz-nick').value.trim();
   const err  = document.getElementById('apz-err');
   err.textContent = '';
@@ -841,17 +849,17 @@ function submitInlineAdd() {
     err.textContent = 'Adresse invalide — 0x + 40 caractères hex';
     return;
   }
-  if (wallets.find(w => w.address === addr)) {
+  if (wallets.find(w => w.address.toLowerCase() === addr)) {
     err.textContent = 'Ce wallet est déjà suivi';
     return;
   }
 
-  wallets.push({ address: addr, nick });
+  wallets.push({ address: raw, nick });
   saveWallets();
   document.getElementById('apz-address').value = '';
   document.getElementById('apz-nick').value = '';
   renderWalletBar();
-  selectWallet(addr);
+  selectWallet(raw);
   toast('Parieur ajouté — chargement en cours…');
 }
 
